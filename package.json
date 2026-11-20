@@ -1,0 +1,17 @@
+{
+  "name": "crosspoint-xteink-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension that converts any image into a screen-exact BMP sleep screen for Xteink X3, X4 and X4 Pro readers running CrossPoint firmware.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "server": "node tools/devserver.mjs",
+    "build": "node tools/build.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "smoke": "node tools/smoke.mjs",
+    "verify": "node --test \"test/*.test.js\" && node tools/smoke.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {}
+}

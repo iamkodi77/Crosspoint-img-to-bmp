@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CrossPoint Studio</title>
+    <link rel="stylesheet" href="css/studio.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="topbar">
+        <div class="brand">
+          <img src="icons/icon-48.png" alt="" width="30" height="30" />
+          <div class="brand-text">
+            <h1>CrossPoint Studio</h1>
+            <p>Pixel-exact sleep screens for Xteink readers</p>
+          </div>
+        </div>
+        <nav class="tabs" role="tablist">
+          <button class="tab is-active" role="tab" data-tab="convert" aria-selected="true">Convert</button>
+          <button class="tab" role="tab" data-tab="device" aria-selected="false">Send to device</button>
+          <button class="tab" role="tab" data-tab="help" aria-selected="false">Guide</button>
+        </nav>
+        <div class="topbar-status" id="draftStatus" aria-live="polite">Ready</div>
+      </header>
+
+      <main class="layout">
+        <!-- ───────────────────────── Convert ───────────────────────── -->
+        <section class="panel tab-panel is-active" id="tab-convert" role="tabpanel">
+          <div class="dropzone" id="dropzone" tabindex="0">
+            <input
+              type="file"
+              id="fileInput"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif,image/*"
+              multiple
+              hidden
+            />
+            <div class="dropzone-inner">
+              <svg viewBox="0 0 24 24" width="42" height="42" aria-hidden="true">
+                <path
+                  d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <strong>Drop images here</strong>
+              <span>or <button type="button" class="link" id="browseBtn">browse files</button> · paste with Ctrl+V</span>
+              <small>PNG, JPG, WebP, AVIF, GIF, BMP — every image is cropped to the exact panel size</small>
+            </div>
+          </div>
+
+          <div class="queue" id="queue" hidden>
+            <div class="queue-head">
+              <h2>Queue <span id="queueCount" class="pill">0</span></h2>
+              <div class="queue-actions">
+                <button type="button" class="btn ghost sm" id="addMoreBtn">Add images</button>
+                <button type="button" class="btn ghost sm" id="clearQueueBtn">Clear</button>
+              </div>
+            </div>
+            <ul class="file-list" id="fileList" role="listbox" aria-label="Images"></ul>
+          </div>
+
+          <div class="editor" id="editor" hidden>
+            <div class="preview-col">
+              <div class="device-frame">
+                <div class="device-screen">
+                  <canvas id="preview" aria-label="Device preview"></canvas>
+                  <div class="screen-glare" aria-hidden="true"></div>
+                </div>
+                <div class="device-chin">
+                  <span class="device-name" id="deviceLabel">Xteink X4 · 480 × 800</span>
+                </div>
+              </div>
+              <div class="preview-meta">
+                <span class="chip" id="chipPixels">480 × 800 px</span>
+                <span class="chip" id="chipFile">1.10 MB</span>
+                <span class="chip" id="chipLevels">4 greys</span>
+              </div>
+              <p class="preview-note">Preview is the literal output bitmap — not a CSS approximation.</p>
+            </div>
+
+            <div class="controls">
+              <fieldset class="group">
+                <legend>Device</legend>
+                <div class="segmented" id="deviceSeg" role="radiogroup" aria-label="Target device"></div>
+                <p class="hint" id="deviceHint"></p>
+              </fieldset>
+
+              <fieldset class="group">
+                <legend>Framing</legend>
+                <div class="segmented" id="fitSeg" role="radiogroup" aria-label="Fit mode">
+                  <button type="button" data-value="cover" role="radio">Fill <small>crop</small></button>
+                  <button type="button" data-value="contain" role="radio">Fit <small>pad</small></button>
+                  <button type="button" data-value="stretch" role="radio">Stretch</button>
+                </div>
+                <label class="slider">
+                  <span>Zoom</span>
+                  <input type="range" id="zoom" min="100" max="300" value="100" />
+                  <output id="zoomOut">100%</output>
+                </label>
+                <div class="pan-row">
+                  <span class="hint">Drag the preview to reposition · double-click to reset</span>
+                  <button type="button" class="btn ghost xs" id="resetFraming">Reset</button>
+                </div>
+              </fieldset>
+
+              <fieldset class="group">
+                <legend>E-ink tone</legend>
+                <label class="slider">
+                  <span>Brightness</span>
+                  <input type="range" id="brightness" min="-100" max="100" value="0" />
+                  <output id="brightnessOut">0</output>
+                </label>
+                <label class="slider">
+                  <span>Contrast</span>
+                  <input type="range" id="contrast" min="-100" max="100" value="0" />
+                  <output id="contrastOut">0</output>
+                </label>
+                <label class="slider">
+                  <span>Gamma</span>
+                  <input type="range" id="gamma" min="40" max="250" value="100" />
+                  <output id="gammaOut">1.00</output>
+                </label>
+                <div class="row">
+                  <label class="check">
+                    <input type="checkbox" id="invert" />
+                    <span>Invert (white artwork on black)</span>
+                  </label>
+                </div>
+                <label class="select-row">
+                  <span>Dither</span>
+                  <select id="dither"></select>
+                </label>
+                <p class="hint" id="ditherHint"></p>
+                <label class="select-row">
+                  <span>Greys</span>
+                  <select id="levels">
+                    <option value="4">4 greys (0 / 85 / 170 / 255)</option>
+                    <option value="2">2 tones (black &amp; white)</option>
+                  </select>
+                </label>
+              </fieldset>
+
+              <fieldset class="group">
+                <legend>File</legend>
+                <label class="select-row">
+                  <span>Format</span>
+                  <select id="format"></select>
+                </label>
+                <p class="hint" id="formatHint"></p>
+                <label class="text-row">
+                  <span>File name</span>
+                  <input type="text" id="fileName" spellcheck="false" />
+                </label>
+              </fieldset>
+
+              <div class="actions">
+                <button type="button" class="btn primary" id="downloadBtn">Download BMP</button>
+                <button type="button" class="btn" id="downloadZipBtn">Download all (ZIP)</button>
+                <button type="button" class="btn accent" id="sendBtn">Send to reader</button>
+              </div>
+              <div class="actions">
+                <button type="button" class="btn ghost sm" id="downloadPngBtn" title="CrossPoint 1.6+ / CrossInk transparent overlay">
+                  Export overlay PNG (Transparent mode)
+                </button>
+              </div>
+              <p class="hint" id="sizeHint"></p>
+            </div>
+          </div>
+
+          <div class="empty-hint" id="emptyHint">
+            <h2>How it works</h2>
+            <ol class="steps">
+              <li><strong>Pick your reader</strong> — X3 (528 × 792), X4 or X4 Pro (480 × 800).</li>
+              <li><strong>Drop an image</strong> — it is resampled with an area-average filter, so no aliasing and no stretched pixels.</li>
+              <li><strong>Dither to 4 greys</strong> — the panel's real palette, so the preview is what the screen draws.</li>
+              <li><strong>Export the exact panel size</strong> — CrossPoint never scales, so one wrong pixel means white borders.</li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- ───────────────────────── Device ───────────────────────── -->
+        <section class="panel tab-panel" id="tab-device" role="tabpanel">
+          <div class="device-card">
+            <h2>Connect to your reader</h2>
+            <p class="hint">
+              On the reader: <strong>Home → File Transfer → Join Network</strong> (or <strong>Create Hotspot</strong>).
+              The reader shows a URL such as <code>http://192.168.1.102/</code>. Enter the IP here — mDNS
+              (<code>crosspoint.local</code>) only resolves on some networks.
+            </p>
+            <div class="connect-row">
+              <input type="text" id="deviceHost" placeholder="192.168.1.102 or crosspoint.local" spellcheck="false" />
+              <button type="button" class="btn primary" id="connectBtn">Connect</button>
+              <button type="button" class="btn ghost" id="browseDeviceBtn" hidden>Browse card</button>
+            </div>
+            <div class="status-line" id="deviceStatus" aria-live="polite"></div>
+
+            <div class="device-info" id="deviceInfo" hidden>
+              <dl>
+                <div><dt>Hardware</dt><dd id="infoDevice">—</dd></div>
+                <div><dt>Firmware</dt><dd id="infoVersion">—</dd></div>
+                <div><dt>Mode</dt><dd id="infoMode">—</dd></div>
+                <div><dt>IP</dt><dd id="infoIp">—</dd></div>
+                <div><dt>Free heap</dt><dd id="infoHeap">—</dd></div>
+              </dl>
+              <p class="hint" id="infoTarget"></p>
+            </div>
+          </div>
+
+          <div class="device-card">
+            <h2>Upload target</h2>
+            <div class="radio-stack">
+              <label class="radio">
+                <input type="radio" name="uploadMode" value="sleep-root" />
+                <div>
+                  <strong>Card root — <code>/sleep.bmp</code></strong>
+                  <small>One fixed sleep screen. CrossPoint reads it when Sleep Screen is set to Custom.</small>
+                </div>
+              </label>
+              <label class="radio">
+                <input type="radio" name="uploadMode" value="sleep-folder" />
+                <div>
+                  <strong><code>/.sleep/</code> folder</strong>
+                  <small>Drop several images in and the reader picks one at random each time it sleeps.</small>
+                </div>
+              </label>
+              <label class="radio">
+                <input type="radio" name="uploadMode" value="custom" />
+                <div>
+                  <strong>Custom folder</strong>
+                  <small>Any folder on the card, e.g. <code>/Sleep</code> or <code>/Screens</code>.</small>
+                </div>
+              </label>
+            </div>
+            <label class="text-row" id="customFolderRow" hidden>
+              <span>Folder</span>
+              <input type="text" id="uploadFolder" placeholder="/Sleep" spellcheck="false" />
+            </label>
+            <label class="check">
+              <input type="checkbox" id="overwrite" />
+              <span>Replace files with the same name (safe: written to <code>.part</code> first)</span>
+            </label>
+            <div class="actions">
+              <button type="button" class="btn primary" id="uploadCurrentBtn">Send current image</button>
+              <button type="button" class="btn" id="uploadAllBtn">Send all images</button>
+              <button type="button" class="btn ghost" id="retargetBtn">Set Sleep Screen → Custom</button>
+            </div>
+            <div class="progress" id="uploadProgress" hidden>
+              <div class="bar"><i id="uploadBar"></i></div>
+              <span id="uploadLabel">Idle</span>
+            </div>
+            <ul class="upload-log" id="uploadLog" aria-live="polite"></ul>
+          </div>
+
+          <div class="device-card">
+            <h2>Card files</h2>
+            <p class="hint">Read-only peek at the SD card while the web server is running.</p>
+            <div class="browser-bar">
+              <button type="button" class="btn ghost sm" id="upBtn" disabled>↑ Up</button>
+              <code id="currentPath">/</code>
+            </div>
+            <ul class="browser-list" id="browserList">
+              <li class="muted">Connect to a reader to browse its card.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ───────────────────────── Guide ───────────────────────── -->
+        <section class="panel tab-panel" id="tab-help" role="tabpanel">
+          <article class="prose">
+            <h2>Putting the file on your reader</h2>
+            <p>
+              CrossPoint shows a custom sleep screen only when <strong>Settings → Display → Sleep Screen</strong>
+              is set to <strong>Custom</strong> (or <em>Cover + Custom</em>). If no valid image is found it
+              silently falls back to the Dark logo — which is why the size and encoding below matter.
+            </p>
+
+            <h3>1. Copy the BMP to the card</h3>
+            <ul>
+              <li><strong>One image:</strong> save it as <code>sleep.bmp</code> in the root of the microSD card.</li>
+              <li><strong>A rotating set:</strong> put any number of <code>.bmp</code> files in a folder named
+                <code>.sleep</code> (a plain <code>sleep</code> folder also works) at the card root.</li>
+              <li>On macOS the <code>.sleep</code> folder is hidden — press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd> to show it.</li>
+              <li>Or send it over Wi-Fi from the <strong>Send to device</strong> tab — no card reader needed.</li>
+            </ul>
+
+            <h3>2. On the device</h3>
+            <p>
+              <strong>Settings → Display → Sleep Screen → Custom</strong>. In CrossPoint 1.5 the setting is
+              under <strong>Settings → Display</strong>; some builds call the entry <em>Screensaver</em>.
+            </p>
+
+            <h3>Exact sizes — never leave this to the firmware</h3>
+            <table class="spec-table">
+              <thead>
+                <tr><th>Reader</th><th>Panel</th><th>Pixels</th><th>PPI</th><th>24-bit file</th><th>2-bit file</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Xteink X3</td><td>3.7″</td><td><strong>528 × 792</strong></td><td>259</td><td>1,254,582 B</td><td>104,566 B</td></tr>
+                <tr><td>Xteink X4</td><td>4.3″</td><td><strong>480 × 800</strong></td><td>220</td><td>1,152,054 B</td><td>96,070 B</td></tr>
+                <tr><td>Xteink X4 Pro</td><td>4.3″</td><td><strong>480 × 800</strong></td><td>219</td><td>1,152,054 B</td><td>96,070 B</td></tr>
+              </tbody>
+            </table>
+            <p class="hint">
+              CrossPoint does not rescale images. A 480 × 800 file on an X3 shows white borders; a phone
+              screenshot is not a valid size either. CrossPoint Studio always writes the panel's exact width
+              and height, and rows are padded to the 4-byte BMP boundary for you.
+            </p>
+
+            <h3>Which format?</h3>
+            <ul>
+              <li><strong>24-bit BMP</strong> — the safest choice. Uncompressed BI_RGB, read by stock firmware
+                and every CrossPoint build.</li>
+              <li><strong>2-bit BMP</strong> — a four-entry greyscale palette. CrossPoint and CrossInk decode
+                it; a twelfth of the size, and noticeably quicker to open on the ESP32.</li>
+              <li><strong>1-bit BMP</strong> — pure black and white for logos and line art.</li>
+              <li>JPG and PNG are <em>not</em> valid custom sleep screens; renaming one to <code>.bmp</code>
+                will not work.</li>
+            </ul>
+
+            <h3>Dithering and ghosting</h3>
+            <p>
+              The panel draws four greys. Photos have thousands, so they must be dithered. Tests in the
+              firmware tracker show that <em>dithered</em> images refresh more cleanly than smooth grey
+              gradients, which can leave the previous page ghosting underneath. Floyd–Steinberg is the
+              default for photos; Atkinson holds contrast better on ink drawings and line art.
+            </p>
+
+            <h3>Transparent overlays</h3>
+            <p>
+              CrossPoint 1.6+ (and CrossInk) can draw a see-through overlay instead of a full image:
+              <code>sleep-overlay.png</code> or a folder of them in <code>.sleep-overlay</code>, with sleep
+              screen mode <strong>Transparent</strong>. A BMP has no alpha, so for per-pixel transparency use a
+              PNG with an alpha channel or a 32-bit BGRA BMP. In this extension, use <strong>Fit</strong> with
+              a transparent source and export a PNG to keep the cut-out.
+            </p>
+
+            <h3>Troubleshooting</h3>
+            <dl class="faq">
+              <dt>It still shows the CrossPoint logo</dt>
+              <dd>Sleep Screen is not on Custom, the file is not named <code>sleep.bmp</code> in the card root
+                (or inside <code>.sleep</code>), or the encoding is paletted/compressed. Export 24-bit here and
+                try again.</dd>
+              <dt>White borders on all four sides</dt>
+              <dd>The file is not the panel size — usually an X4 file (480 × 800) on an X3 (528 × 792). Pick the
+                right device above and re-export.</dd>
+              <dt>Muddy or blotchy result</dt>
+              <dd>Busy mid-tones collapsing into four levels. Raise contrast, try <em>Ordered 4×4</em>, or use
+                <em>Atkinson</em> for line art.</dd>
+              <dt>"Could not reach …" when sending over Wi-Fi</dt>
+              <dd>Use the IP address rather than <code>crosspoint.local</code>, make sure File Transfer mode is
+                still open, and check both devices are on the same network.</dd>
+              <dt>Upload says "File already exists"</dt>
+              <dd>Enable <em>Replace files with the same name</em>, which sends
+                <code>overwrite=1</code> and writes via a <code>.part</code> file.</dd>
+            </dl>
+
+            <h3>Privacy</h3>
+            <p>
+              Conversion runs entirely on your machine. Images never leave the browser unless you explicitly
+              press <strong>Send to reader</strong>, in which case the BMP goes only to the address you typed.
+              No analytics, no remote servers, no accounts.
+            </p>
+          </article>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>BMP written at panel size · BI_RGB, uncompressed · bottom-up with 4-byte row padding</span>
+        <span id="engineInfo">CrossPoint Studio v1.0.0</span>
+      </footer>
+    </div>
+
+    <div class="toast-stack" id="toastStack" aria-live="assertive"></div>
+    <script type="module" src="js/studio.js"></script>
+  </body>
+</html>
