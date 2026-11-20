@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CrossPoint Studio</title>
+    <link rel="stylesheet" href="css/popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/icon-32.png" alt="" width="22" height="22" />
+      <div>
+        <strong>CrossPoint Studio</strong>
+        <small>X3 · X4 · X4 Pro</small>
+      </div>
+    </header>
+
+    <button class="primary" id="openStudio">Open Studio</button>
+
+    <label class="drop" id="drop">
+      <input type="file" id="quickFile" accept="image/*" hidden />
+      <span>Drop an image here, or click to convert</span>
+    </label>
+
+    <div class="grid" id="profileGrid" role="radiogroup" aria-label="Target device"></div>
+
+    <div class="device-row">
+      <input type="text" id="host" placeholder="Reader IP, e.g. 192.168.1.102" spellcheck="false" />
+      <button id="connect">Test</button>
+    </div>
+    <div class="status" id="status"></div>
+
+    <footer>
+      <span id="lastUsed">Panel-exact BMP · done locally</span>
+      <button class="link" id="openGuide">Guide</button>
+    </footer>
+
+    <script type="module" src="js/popup.js"></script>
+  </body>
+</html>
